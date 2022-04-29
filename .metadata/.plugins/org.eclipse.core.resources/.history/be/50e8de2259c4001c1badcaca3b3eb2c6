@@ -1,0 +1,290 @@
+/**
+******************************************************************************
+* @brief      Implementation of the Timers
+* @file       Timer.c
+* @date       09-Feb-2022
+* @author     Veral, Nagarro Embedded Team
+* @copyright  Wrig Nanosystems Private Limited
+******************************************************************************
+*/
+
+#include "truehb_def.h"
+
+extern IWDG_HandleTypeDef hiwdg;
+extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim3;
+
+uint32_t Timer9_Delay10msReg = 0;
+uint32_t Timer11_Delay10msReg = 0;
+
+uint32_t Timer9_Delay10msReg2;
+uint32_t Timer9_PwrDown10msReg = 0;
+
+uint32_t Timer9_T15_FlashEnable = 0;
+uint32_t Timer9_T16_FlashEnable = 0;
+uint32_t Timer9_T19_FlashEnable = 0;
+ uint32_t Batterycharging = 0;
+
+ extern _Bool flag_delay_1ms;
+ extern _Bool flag_delay_10ms;
+ extern _Bool flag_delay_200ms;
+ extern _Bool flag_delay_1sec;
+
+ __IO uint32_t uwLsiFreq = 0;
+
+ extern void Error_Handler();
+
+/**
+ * @brief  This function Enbales the WatchDog Timer Functionality.
+ * @param  data : None
+ * @retval None
+ */
+void HBMeter_WDTimerEnable(void)
+{
+
+	hiwdg.Instance = IWDG;
+	hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
+	hiwdg.Init.Reload = 4095;
+	hiwdg.Init.Window = IWDG_WINDOW_DISABLE;
+
+	if(HAL_IWDG_Init(&hiwdg) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+
+	 __HAL_DBGMCU_UNFREEZE_IWDG(); //added for iwdg
+
+#if 0
+	while(1) {
+		HAL_Delay(5000);
+		HAL_IWDG_Refresh(&hiwdg);
+	}
+#endif
+
+}
+
+/**
+ * @brief  This function Enables the Truehb Timer (TIM7).
+ * @param  data : None
+ * @retval None
+ */
+
+void TRUEHB_Timer_Init(void)
+{
+   TIM_MasterConfigTypeDef sMasterConfig = {0};
+   TRUEHB_TIMER_CLK_ENABLE();
+
+  htim7.Instance = TRUEHB_TIMER;//TIM7;
+  htim7.Init.Prescaler = 7;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 800;    /*800  for 200 us timer period*/
+  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* enable interrupt for timer */
+	HAL_NVIC_SetPriority(TRUHB_TIMER_IRQn, 3, 0);
+	HAL_NVIC_EnableIRQ(TRUHB_TIMER_IRQn);
+}
+
+/**
+ * @brief  This function Initilizes the LCD TImmer TIM3.
+ * @param  data : None
+ * @retval None
+ */
+void LCD_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+	TIM_OC_InitTypeDef sConfigOC = {0};
+
+	/* USER CODE END TIM3_Init 0 */
+	htim3.Instance = TIM3;
+	htim3.Init.Prescaler = 120; //120
+	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim3.Init.Period =400; //500
+	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+	{
+	Error_Handler();
+	}
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIM_OC_Init(&htim3) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sConfigOC.OCMode = TIM_OCMODE_TOGGLE;
+	sConfigOC.Pulse = 0;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	__HAL_TIM_ENABLE_OCxPRELOAD(&htim3, TIM_CHANNEL_1);
+	sConfigOC.Pulse =0x55; //0x100
+	if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	__HAL_TIM_ENABLE_OCxPRELOAD(&htim3, TIM_CHANNEL_2);  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+ * @brief  This function Initilzes the TIM base MSP.
+ * @param  tim_baseHandle
+ * @retval None
+ */
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
+{
+
+  if(tim_baseHandle->Instance==TIM3)
+  {
+  /* USER CODE BEGIN TIM3_MspInit 0 */
+
+  /* USER CODE END TIM3_MspInit 0 */
+    /* TIM3 clock enable */
+    __HAL_RCC_TIM3_CLK_ENABLE();
+
+    /* TIM3 interrupt Init */
+    HAL_NVIC_SetPriority(TIM3_IRQn, 2, 0);
+    HAL_NVIC_EnableIRQ(TIM3_IRQn);
+  /* USER CODE BEGIN TIM3_MspInit 1 */
+
+  /* USER CODE END TIM3_MspInit 1 */
+  }
+}
+
+/**
+ * @brief  This function deinitilizes the base MSP.
+ * @param  data : None
+ * @retval None
+ */
+
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
+{
+
+  if(tim_baseHandle->Instance==TIM3)
+  {
+  /* USER CODE BEGIN TIM3_MspDeInit 0 */
+
+  /* USER CODE END TIM3_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM3_CLK_DISABLE();
+
+    /* TIM3 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM3_IRQn);
+  /* USER CODE BEGIN TIM3_MspDeInit 1 */
+
+  /* USER CODE END TIM3_MspDeInit 1 */
+  }
+}
+
+
+/**
+ * @brief Timer DeInit
+ * @param None
+ * @retval None
+ */
+void TRUEHB_Timer_DeInit(void)
+{
+	TRUEHB_TIMER_CLK_ENABLE();
+	HAL_NVIC_DisableIRQ(TRUHB_TIMER_IRQn);
+}
+
+/**
+ * @brief Start timer in interrupt mode
+ * @param None
+ * @retval None
+ */
+void TRUEHB_Timer_Start(void)
+{
+	HAL_TIM_Base_Start_IT(&htim7);
+}
+
+/**
+ * @brief Stop timer
+ * @param None
+ * @retval None
+ */
+void TRUEHB_Timer_Stop(void)
+{
+	HAL_TIM_Base_Stop_IT(&htim7);
+}
+
+/**
+ * @brief this function checks 1 milisecond overflow
+ * @param None
+ * @retval return 1 if overflow else 0
+ */
+uint8_t Truehb_Timer_1ms_Overflow(void) {
+	if (flag_delay_1ms) {
+		flag_delay_1ms = 0;
+		return (1);
+	} else
+		return (0);
+}
+
+/**
+ * @brief this function checks 10 milisecond overflow
+ * @param None
+ * @retval return 1 if overflow else 0
+ */
+uint8_t Truehb_Timer_10ms_Overflow(void) {
+	if (flag_delay_10ms) {
+		flag_delay_10ms = 0;
+		return (1);
+	} else
+		return (0);
+}
+
+/**
+ * @brief this function checks 200 milisecond overflow
+ * @param None
+ * @retval return 1 if overflow else 0
+ */
+uint8_t Truehb_Timer_200ms_Overflow(void) {
+	if (flag_delay_200ms) {
+		flag_delay_200ms = 0;
+		return (1);
+	} else
+		return (0);
+}
+
+/**
+ * @brief this function checks 1 second overflow
+ * @param None
+ * @retval return 1 if overflow else 0
+ */
+uint8_t Truehb_Timer_1sec_Overflow(void) {
+	if (flag_delay_1sec) {
+		flag_delay_1sec = 0;
+		return (1);
+	} else
+		return (0);
+}
+
