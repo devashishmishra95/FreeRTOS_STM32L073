@@ -64,7 +64,7 @@ main-build: 001_FreeRTOS.elf secondary-outputs
 
 # Tool invocations
 001_FreeRTOS.elf: $(OBJS) $(USER_OBJS) C:\Users\devashishmishra\OneDrive\ -\ Nagarro\Devashish_work\Learning\FreeRTOS\WorkSpace\001_FreeRTOS\STM32L073RZTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "001_FreeRTOS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"C:\Users\devashishmishra\OneDrive - Nagarro\Devashish_work\Learning\FreeRTOS\WorkSpace\001_FreeRTOS\STM32L073RZTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="001_FreeRTOS.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "001_FreeRTOS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"C:\Users\devashishmishra\OneDrive - Nagarro\Devashish_work\Learning\FreeRTOS\WorkSpace\001_FreeRTOS\STM32L073RZTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="001_FreeRTOS.map" -Wl,--gc-sections -static -specs=rdimon.specs -lc -lrdimon --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -9,7 +9,6 @@ C_SRCS += \
 ../Core/Src/stm32l0xx_hal_msp.c \
 ../Core/Src/stm32l0xx_hal_timebase_tim.c \
 ../Core/Src/stm32l0xx_it.c \
-../Core/Src/syscalls.c \
 ../Core/Src/system_stm32l0xx.c 
 
 OBJS += \
@@ -17,7 +16,6 @@ OBJS += \
 ./Core/Src/stm32l0xx_hal_msp.o \
 ./Core/Src/stm32l0xx_hal_timebase_tim.o \
 ./Core/Src/stm32l0xx_it.o \
-./Core/Src/syscalls.o \
 ./Core/Src/system_stm32l0xx.o 
 
 C_DEPS += \
@@ -25,7 +23,6 @@ C_DEPS += \
 ./Core/Src/stm32l0xx_hal_msp.d \
 ./Core/Src/stm32l0xx_hal_timebase_tim.d \
 ./Core/Src/stm32l0xx_it.d \
-./Core/Src/syscalls.d \
 ./Core/Src/system_stm32l0xx.d 
 
 
@@ -36,7 +33,7 @@ Core/Src/%.o: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/stm32l0xx_hal_msp.d ./Core/Src/stm32l0xx_hal_msp.o ./Core/Src/stm32l0xx_hal_timebase_tim.d ./Core/Src/stm32l0xx_hal_timebase_tim.o ./Core/Src/stm32l0xx_it.d ./Core/Src/stm32l0xx_it.o ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/system_stm32l0xx.d ./Core/Src/system_stm32l0xx.o
+	-$(RM) ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/stm32l0xx_hal_msp.d ./Core/Src/stm32l0xx_hal_msp.o ./Core/Src/stm32l0xx_hal_timebase_tim.d ./Core/Src/stm32l0xx_hal_timebase_tim.o ./Core/Src/stm32l0xx_it.d ./Core/Src/stm32l0xx_it.o ./Core/Src/system_stm32l0xx.d ./Core/Src/system_stm32l0xx.o
 
 .PHONY: clean-Core-2f-Src
 
